@@ -1,6 +1,5 @@
 ## 剧本杀 Agent - NebulaGraph 分布式免费方案（完整版）
 
-本项目提供企业级、可自部署且完全免费的剧本杀智能体系统：
 
 ### 核心功能
 - **NebulaGraph 分布式集群**（3 metad / 2 graphd / 3 storaged）
