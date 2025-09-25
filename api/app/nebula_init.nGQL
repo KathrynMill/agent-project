@@ -1,0 +1,27 @@
+-- Create space for scripts (if not exists semantics via check before apply in code)
+CREATE SPACE IF NOT EXISTS scripts(partition_num=5, replica_factor=1, vid_type=FIXED_STRING(64));
+USE scripts;
+
+-- Tags (nodes)
+CREATE TAG IF NOT EXISTS Person(name string, role string);
+CREATE TAG IF NOT EXISTS Location(name string);
+CREATE TAG IF NOT EXISTS Item(name string, type string);
+CREATE TAG IF NOT EXISTS Event(name string, description string);
+CREATE TAG IF NOT EXISTS Timeline(name string, start string, end string);
+
+-- Edges (relationships)
+CREATE EDGE IF NOT EXISTS LOCATED_IN(time string);
+CREATE EDGE IF NOT EXISTS HAS_ITEM();
+CREATE EDGE IF NOT EXISTS PARTICIPATED_IN(role string);
+CREATE EDGE IF NOT EXISTS HAPPENED_AT();
+CREATE EDGE IF NOT EXISTS HAPPENED_ON();
+
+-- Indexes
+CREATE TAG INDEX IF NOT EXISTS person_name_index ON Person(name(64));
+CREATE TAG INDEX IF NOT EXISTS location_name_index ON Location(name(64));
+CREATE TAG INDEX IF NOT EXISTS item_name_index ON Item(name(64));
+CREATE TAG INDEX IF NOT EXISTS event_name_index ON Event(name(64));
+CREATE TAG INDEX IF NOT EXISTS timeline_name_index ON Timeline(name(64));
+
+
+

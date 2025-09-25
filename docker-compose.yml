@@ -1,0 +1,231 @@
+version: "3.9"
+
+services:
+  # -----------------------------
+  # vLLM serving OpenAI-compatible API with Qwen2.5 Instruct (free, local)
+  # -----------------------------
+  vllm:
+    image: vllm/vllm-openai:latest
+    command: >-
+      --model Qwen/Qwen2.5-14B-Instruct
+      --max-model-len 32768
+      --tensor-parallel-size 1
+    environment:
+      - VLLM_OPENAI_API_KEY=local
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  # -----------------------------
+  # Embeddings service (BGE-M3)
+  # -----------------------------
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-0.4
+    environment:
+      - MODEL_ID=BAAI/bge-m3
+    ports:
+      - "8080:80"
+
+  # -----------------------------
+  # Qdrant vector DB
+  # -----------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # -----------------------------
+  # NebulaGraph distributed cluster (3x meta, 2x graphd, 3x storaged)
+  # -----------------------------
+  nebula-metad0:
+    image: vesoft/nebula-metad:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-metad0
+      - --ws_ip=nebula-metad0
+      - --port=9559
+      - --data_path=/data/meta
+      - --log_dir=/logs
+    ports:
+      - "9559:9559"
+    volumes:
+      - nebula_meta0:/data/meta
+      - nebula_logs:/logs
+
+  nebula-metad1:
+    image: vesoft/nebula-metad:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-metad1
+      - --ws_ip=nebula-metad1
+      - --port=9559
+      - --data_path=/data/meta
+      - --log_dir=/logs
+    volumes:
+      - nebula_meta1:/data/meta
+      - nebula_logs:/logs
+
+  nebula-metad2:
+    image: vesoft/nebula-metad:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-metad2
+      - --ws_ip=nebula-metad2
+      - --port=9559
+      - --data_path=/data/meta
+      - --log_dir=/logs
+    volumes:
+      - nebula_meta2:/data/meta
+      - nebula_logs:/logs
+
+  nebula-graphd0:
+    image: vesoft/nebula-graphd:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-graphd0
+      - --port=9669
+      - --ws_ip=nebula-graphd0
+      - --log_dir=/logs
+      - --enable_authorize=false
+    depends_on:
+      - nebula-metad0
+      - nebula-metad1
+      - nebula-metad2
+    ports:
+      - "9669:9669"  # Graph service (Thrift/MySQL-like)
+    volumes:
+      - nebula_logs:/logs
+
+  nebula-graphd1:
+    image: vesoft/nebula-graphd:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-graphd1
+      - --port=9669
+      - --ws_ip=nebula-graphd1
+      - --log_dir=/logs
+      - --enable_authorize=false
+    depends_on:
+      - nebula-metad0
+      - nebula-metad1
+      - nebula-metad2
+    volumes:
+      - nebula_logs:/logs
+
+  nebula-storaged0:
+    image: vesoft/nebula-storaged:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-storaged0
+      - --ws_ip=nebula-storaged0
+      - --port=9779
+      - --data_path=/data/storage
+      - --log_dir=/logs
+    depends_on:
+      - nebula-metad0
+      - nebula-metad1
+      - nebula-metad2
+    volumes:
+      - nebula_storage0:/data/storage
+      - nebula_logs:/logs
+
+  nebula-storaged1:
+    image: vesoft/nebula-storaged:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-storaged1
+      - --ws_ip=nebula-storaged1
+      - --port=9779
+      - --data_path=/data/storage
+      - --log_dir=/logs
+    depends_on:
+      - nebula-metad0
+      - nebula-metad1
+      - nebula-metad2
+    volumes:
+      - nebula_storage1:/data/storage
+      - nebula_logs:/logs
+
+  nebula-storaged2:
+    image: vesoft/nebula-storaged:v3.6.0
+    environment:
+      USER: root
+      TZ: UTC
+    command:
+      - --meta_server_addrs=nebula-metad0:9559,nebula-metad1:9559,nebula-metad2:9559
+      - --local_ip=nebula-storaged2
+      - --ws_ip=nebula-storaged2
+      - --port=9779
+      - --data_path=/data/storage
+      - --log_dir=/logs
+    depends_on:
+      - nebula-metad0
+      - nebula-metad1
+      - nebula-metad2
+    volumes:
+      - nebula_storage2:/data/storage
+      - nebula_logs:/logs
+
+  # -----------------------------
+  # API service
+  # -----------------------------
+  api:
+    build: ./api
+    environment:
+      - OPENAI_API_BASE=http://vllm:8000/v1
+      - OPENAI_API_KEY=local
+      - EMBEDDINGS_API=http://embeddings:80
+      - QDRANT_URL=http://qdrant:6333
+      - NEBULA_ADDRS=nebula-graphd0:9669,nebula-graphd1:9669
+      - NEBULA_USER=root
+      - NEBULA_PASSWORD=
+      - NEBULA_SPACE=scripts
+    depends_on:
+      - vllm
+      - embeddings
+      - qdrant
+      - nebula-graphd0
+      - nebula-graphd1
+    ports:
+      - "9000:9000"
+
+volumes:
+  qdrant_data:
+  nebula_logs:
+  nebula_meta0:
+  nebula_meta1:
+  nebula_meta2:
+  nebula_storage0:
+  nebula_storage1:
+  nebula_storage2:
+
+
+
