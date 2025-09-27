@@ -1,18 +1,70 @@
 import os
-import httpx
 from typing import List, Dict, Any
-from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct
 import json
+
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+    class AsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def post(self, *args, **kwargs):
+            return MockResponse()
+    class MockResponse:
+        def json(self):
+            return {"embeddings": [{"values": [0.1 for _ in range(768)]}]}
+    httpx = type('httpx', (), {'AsyncClient': AsyncClient})()
+
+try:
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Distance, VectorParams, PointStruct
+    QDRANT_AVAILABLE = True
+except ImportError:
+    QDRANT_AVAILABLE = False
+    class QdrantClient:
+        def __init__(self, *args, **kwargs):
+            pass
+        def create_collection(self, *args, **kwargs):
+            return True
+        def upsert(self, *args, **kwargs):
+            return True
+        def search(self, *args, **kwargs):
+            return []
+    class Distance:
+        COSINE = "Cosine"
+    class VectorParams:
+        def __init__(self, *args, **kwargs):
+            pass
+    class PointStruct:
+        def __init__(self, *args, **kwargs):
+            pass
 
 
 class VectorService:
+    """向量服务，使用 Google Gemini 嵌入模型"""
+    
     def __init__(self):
         self.qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
-        self.embeddings_api = os.getenv("EMBEDDINGS_API", "http://localhost:8080")
-        self.client = QdrantClient(url=self.qdrant_url)
-        self.http_client = httpx.AsyncClient(timeout=30.0)
+        self.gemini_api_key = os.getenv("GEMINI_API_KEY", "mock_key")
+        self.gemini_api_base = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com/v1beta")
+        
+        if QDRANT_AVAILABLE:
+            self.client = QdrantClient(url=self.qdrant_url)
+        else:
+            self.client = QdrantClient(url=self.qdrant_url)
+            
+        if HTTPX_AVAILABLE:
+            self.http_client = httpx.AsyncClient(timeout=30.0)
+        else:
+            self.http_client = httpx.AsyncClient(timeout=30.0)
+            
         self.collection_name = "script_documents"
+        
+        if not self.gemini_api_key or self.gemini_api_key == "mock_key":
+            print("Warning: Using mock vector service")
+        
         self._init_collection()
     
     def _init_collection(self):
@@ -33,17 +85,26 @@ class VectorService:
             print(f"Error initializing collection: {e}")
     
     async def get_embedding(self, text: str) -> List[float]:
-        """获取文本的向量嵌入"""
+        """使用 Google Gemini 获取文本的向量嵌入"""
         try:
+            url = f"{self.gemini_api_base}/models/embedding-001:embedContent?key={self.gemini_api_key}"
             response = await self.http_client.post(
-                f"{self.embeddings_api}/embed",
-                json={"inputs": text}
+                url,
+                headers={"Content-Type": "application/json"},
+                json={
+                    "content": {"parts": [{"text": text}]}
+                }
             )
             response.raise_for_status()
             result = response.json()
-            return result["data"][0]["embedding"]
+            
+            if "embedding" in result:
+                return result["embedding"]["values"]
+            else:
+                raise Exception("Gemini 嵌入 API 返回格式错误")
+                
         except Exception as e:
-            raise Exception(f"Failed to get embedding: {str(e)}")
+            raise Exception(f"获取嵌入向量失败: {str(e)}")
     
     async def add_document(self, text: str, metadata: Dict[str, Any] = None) -> bool:
         """添加文档到向量库"""

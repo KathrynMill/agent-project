@@ -2,9 +2,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import os
 from typing import List, Dict, Any
-from services.llm_service import LLMService
-from services.nebula_service import NebulaService
-from services.vector_service import VectorService
+from app.services.llm_service import LLMService
+from app.services.nebula_service import NebulaService
+from app.services.vector_service import VectorService
+from app.agents.chief_editor_agent import ChiefEditorAgent
 
 
 app = FastAPI(title="ScriptAgent API", version="0.1.0")
@@ -13,6 +14,7 @@ app = FastAPI(title="ScriptAgent API", version="0.1.0")
 llm_service = LLMService()
 nebula_service = NebulaService()
 vector_service = VectorService()
+chief_editor = ChiefEditorAgent(nebula_service, llm_service)
 
 
 class Health(BaseModel):
@@ -33,6 +35,11 @@ class ExtractRequest(BaseModel):
 
 class RAGRequest(BaseModel):
     question: str
+
+class CompressRequest(BaseModel):
+    player_scripts: Dict[str, str]
+    master_guide: str
+    target_hours: int = 4
 
 
 @app.get("/health", response_model=Health)
@@ -126,6 +133,41 @@ async def vector_info():
 async def vector_search(query: str, limit: int = 5):
     results = await vector_service.search_similar(query, limit)
     return {"query": query, "results": results}
+
+
+@app.post("/compress_script")
+async def compress_script(req: CompressRequest):
+    """核心工作流：構建詭計感知圖譜 -> 多智能體壓縮 -> 返回最終稿"""
+    try:
+        # 1) 構建詭計感知圖譜
+        print("開始構建詭計感知圖譜...")
+        graph_data = llm_service.build_trick_aware_kg(req.player_scripts, req.master_guide)
+        upsert_result = nebula_service.batch_upsert_from_graph_data(graph_data)
+        print("圖譜構建完成")
+
+        # 2) 創建並執行多智能體壓縮工作流
+        print("開始多智能體壓縮工作流...")
+        workflow = chief_editor.create_compression_workflow()
+        
+        # 準備工作流輸入數據
+        workflow_input = {
+            "player_scripts": req.player_scripts,
+            "master_guide": req.master_guide,
+            "target_hours": req.target_hours
+        }
+        
+        # 執行工作流
+        compression_result = workflow.invoke(workflow_input)
+        print("多智能體壓縮工作流完成")
+
+        return {
+            "kg_upsert": upsert_result,
+            "compression_result": compression_result,
+            "message": "劇本壓縮完成"
+        }
+    except Exception as e:
+        print(f"壓縮過程中發生錯誤: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

@@ -16,12 +16,23 @@ CREATE EDGE IF NOT EXISTS PARTICIPATED_IN(role string);
 CREATE EDGE IF NOT EXISTS HAPPENED_AT();
 CREATE EDGE IF NOT EXISTS HAPPENED_ON();
 
+-- ------------------------------
+-- Trick-aware schema extensions
+-- ------------------------------
+-- Statements represent perspective-specific claims from player scripts
+CREATE TAG IF NOT EXISTS Statement(content string, perspective string, source_chunk_id string);
+
+-- Edges to capture contradictions and identity tricks
+CREATE EDGE IF NOT EXISTS CONTRADICTS();
+CREATE EDGE IF NOT EXISTS POTENTIAL_ALIAS_OF();
+
 -- Indexes
 CREATE TAG INDEX IF NOT EXISTS person_name_index ON Person(name(64));
 CREATE TAG INDEX IF NOT EXISTS location_name_index ON Location(name(64));
 CREATE TAG INDEX IF NOT EXISTS item_name_index ON Item(name(64));
 CREATE TAG INDEX IF NOT EXISTS event_name_index ON Event(name(64));
 CREATE TAG INDEX IF NOT EXISTS timeline_name_index ON Timeline(name(64));
+CREATE TAG INDEX IF NOT EXISTS statement_perspective_index ON Statement(perspective(64));
 
 
 

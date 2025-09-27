@@ -1,36 +1,67 @@
 import os
-import httpx
 from typing import Dict, Any, List
 import json
 
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
+    # 創建模擬 httpx 類
+    class AsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def post(self, *args, **kwargs):
+            return MockResponse()
+    class MockResponse:
+        def json(self):
+            return {"candidates": [{"content": {"parts": [{"text": "Mock response"}]}}]}
+    httpx = type('httpx', (), {'AsyncClient': AsyncClient})()
+
 
 class LLMService:
+    """LLM 服务，使用 Google Gemini API"""
+    
     def __init__(self):
-        self.api_base = os.getenv("OPENAI_API_BASE", "http://localhost:8000/v1")
-        self.api_key = os.getenv("OPENAI_API_KEY", "local")
-        self.client = httpx.AsyncClient(timeout=60.0)
+        self.api_key = os.getenv("GEMINI_API_KEY", "mock_key")
+        self.api_base = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com/v1beta")
+        
+        if HTTPX_AVAILABLE:
+            self.client = httpx.AsyncClient(timeout=60.0)
+        else:
+            self.client = httpx.AsyncClient(timeout=60.0)
+        
+        if not self.api_key or self.api_key == "mock_key":
+            print("Warning: Using mock LLM service")
     
     async def generate_text(self, prompt: str, max_tokens: int = 2000) -> str:
-        """调用 LLM 生成文本"""
+        """使用 Google Gemini API 生成文本"""
+        if not HTTPX_AVAILABLE or self.api_key == "mock_key":
+            return f"Mock response for: {prompt[:100]}..."
+            
         try:
+            url = f"{self.api_base}/models/gemini-1.5-flash:generateContent?key={self.api_key}"
             response = await self.client.post(
-                f"{self.api_base}/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {self.api_key}",
-                    "Content-Type": "application/json"
-                },
+                url,
+                headers={"Content-Type": "application/json"},
                 json={
-                    "model": "Qwen/Qwen2.5-14B-Instruct",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": max_tokens,
-                    "temperature": 0.1
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "maxOutputTokens": max_tokens,
+                        "temperature": 0.7
+                    }
                 }
             )
             response.raise_for_status()
             result = response.json()
-            return result["choices"][0]["message"]["content"]
+            
+            if "candidates" in result and len(result["candidates"]) > 0:
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+            else:
+                raise Exception("Gemini API 返回空结果")
+                
         except Exception as e:
-            raise Exception(f"LLM 调用失败: {str(e)}")
+            raise Exception(f"Gemini API 调用失败: {str(e)}")
     
     async def extract_entities_and_events(self, text: str) -> Dict[str, Any]:
         """从剧本文本中抽取实体和事件"""
@@ -136,3 +167,60 @@ class LLMService:
 """
         
         return await self.generate_text(prompt, max_tokens=1500)
+
+    async def build_trick_aware_kg(self, player_scripts: Dict[str, str], master_guide: str) -> Dict[str, Any]:
+        """构建詭計感知圖譜：
+        1) 先讀主持人手冊抽取真相層 truths
+        2) 再讀玩家劇本抽取各自陳述 statements，並對比真相生成 tricks（如 CONTRADICTS）
+        返回：包含 persons/locations/items/events/timelines/statements/truths/tricks 的字典
+        """
+        # 第一階段：真相層
+        truth_prompt = f"""
+你是案件整理專家。以下是主持人手冊（真相層）。
+請抽取：
+1) 事件真相（關鍵事件與真實時間 real_time）
+2) 真實角色關係（人-人、人-事件、人-地點）
+3) 重要時間線
+請輸出 JSON，鍵包含：events（含 real_time）、persons、locations、items、timelines、truths。
+
+主持人手冊：\n{master_guide}
+"""
+        truths_json = await self.generate_text(truth_prompt, max_tokens=3000)
+        try:
+            truths = json.loads(truths_json)
+        except Exception:
+            truths = {"events": [], "persons": [], "locations": [], "items": [], "timelines": [], "truths": []}
+
+        # 第二階段：玩家陳述層 + 詭計
+        statements: List[Dict[str, Any]] = []
+        tricks: List[Dict[str, str]] = []
+        for role, script in player_scripts.items():
+            st_prompt = f"""
+你是推理抽取器。針對以下玩家視角文本，抽取該角色的關鍵陳述（Statement）。
+每條陳述需包含：id（自定義唯一）、content（內容）、perspective（角色名）、source_chunk_id（可留空）。
+同時，對比以下真相層 truths，給出矛盾關係 CONTRADICTS（from 為此陳述 id、to 為相矛盾的真相事件或陳述 id 名稱）。
+輸出 JSON：{{"statements": [...], "tricks": [...]}}
+
+玩家角色：{role}
+玩家文本：\n{script}
+真相層（供對比）：\n{json.dumps(truths, ensure_ascii=False)}
+"""
+            st_json = await self.generate_text(st_prompt, max_tokens=3000)
+            try:
+                part = json.loads(st_json)
+                statements.extend(part.get("statements", []))
+                tricks.extend(part.get("tricks", []))
+            except Exception:
+                continue
+
+        merged = {
+            "persons": truths.get("persons", []),
+            "locations": truths.get("locations", []),
+            "items": truths.get("items", []),
+            "events": truths.get("events", []),
+            "timelines": truths.get("timelines", []),
+            "truths": truths.get("truths", []),
+            "statements": statements,
+            "tricks": tricks,
+        }
+        return merged
