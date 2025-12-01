@@ -1,0 +1,135 @@
+version: "3.9"
+
+services:
+  # -----------------------------
+  # 专用模型API服务
+  # -----------------------------
+  api:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.specialized
+    ports:
+      - "9000:9000"
+    environment:
+      - MODEL_PATH=/app/models/specialized_compression_model.pth
+      - MODEL_NAME=t5-large
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+    depends_on:
+      - qdrant
+      - redis
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    restart: unless-stopped
+
+  # -----------------------------
+  # GPU训练服务（可选）
+  # -----------------------------
+  trainer:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.trainer
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./checkpoints:/app/checkpoints
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - WANDB_API_KEY=${WANDB_API_KEY:-}
+    command: python scripts/train_model.py --config configs/training_config.yaml
+    profiles:
+      - training
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  # -----------------------------
+  # Qdrant vector DB
+  # -----------------------------
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  # -----------------------------
+  # Redis缓存服务
+  # -----------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # -----------------------------
+  # NebulaGraph (简化版)
+  # -----------------------------
+  nebula:
+    image: vesoft/nebula-graph:v3.6.0
+    ports:
+      - "9669:9669"
+      - "19669:19669"
+    environment:
+      USER: root
+    volumes:
+      - nebula_data:/data
+    restart: unless-stopped
+
+  # -----------------------------
+  # 监控服务 - TensorBoard
+  # -----------------------------
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./logs/tensorboard:/logs
+    command: tensorboard --logdir=/logs --host=0.0.0.0 --port=6006
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # -----------------------------
+  # 模型评估服务
+  # -----------------------------
+  evaluator:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.specialized
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+      - ./results:/app/results
+    environment:
+      - MODEL_PATH=/app/models/specialized_compression_model.pth
+    command: python scripts/evaluate_model.py --model-path /app/models/specialized_compression_model.pth
+    profiles:
+      - evaluation
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+volumes:
+  qdrant_data:
+  redis_data:
+  nebula_data:
+
+networks:
+  default:
+    name: script-compression-network

@@ -61,17 +61,28 @@ logs/
 *.tmp
 *.temp
 
-# Model files (too large for git)
+# Model files (exclude large binary files, but keep JSON models)
 *.bin
 *.safetensors
-models/
+*.pt
+*.pth
+models/**/*.pt
+models/**/*.pth
 
-# Data files
-data/
+# Keep essential JSON model files and training data
+!models/specialized_compression/*.json
+!models/specialized_compression/checkpoints/*.json
+!data/extracted/*.json
+
+# Exclude raw data files and large datasets
+data/raw/
 datasets/
 *.csv
-*.json
 *.pkl
+
+# Word documents
+*.docx
+*.doc
 
 # Jupyter Notebook
 .ipynb_checkpoints

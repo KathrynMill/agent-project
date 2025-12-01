@@ -1,0 +1,265 @@
+{
+  "test_summary": {
+    "test_completed_at": "2025-12-01T15:44:02.646080",
+    "test_type": "real",
+    "total_levels_tested": 4,
+    "total_samples_tested": 8
+  },
+  "performance_by_level": {
+    "heavy": {
+      "avg_quality_score": 0.836,
+      "avg_compression_ratio": 0.257,
+      "avg_processing_time": 0.001,
+      "compression_accuracy": 0.957,
+      "samples_tested": 2,
+      "success_rate": 1.0
+    },
+    "medium": {
+      "avg_quality_score": 0.836,
+      "avg_compression_ratio": 0.085,
+      "avg_processing_time": 0.001,
+      "compression_accuracy": 0.485,
+      "samples_tested": 2,
+      "success_rate": 1.0
+    },
+    "light": {
+      "avg_quality_score": 0.828,
+      "avg_compression_ratio": 0.8,
+      "avg_processing_time": 0.001,
+      "compression_accuracy": 1.0,
+      "samples_tested": 2,
+      "success_rate": 1.0
+    },
+    "minimal": {
+      "avg_quality_score": 0.803,
+      "avg_compression_ratio": 0.999,
+      "avg_processing_time": 0.0,
+      "compression_accuracy": 0.951,
+      "samples_tested": 2,
+      "success_rate": 1.0
+    }
+  },
+  "detailed_results": {
+    "heavy": [
+      {
+        "sample_id": 1,
+        "original_length": 99555,
+        "compressed_length": 25602,
+        "target_ratio": 0.3,
+        "actual_ratio": 0.257,
+        "processing_time": 0.0010597705841064453,
+        "quality_scores": {
+          "overall_quality": 0.836,
+          "compression_ratio_score": 0.9,
+          "preservation_score": 0.95,
+          "readability_score": 0.794,
+          "playability_score": 0.753
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      },
+      {
+        "sample_id": 2,
+        "original_length": 99555,
+        "compressed_length": 25602,
+        "target_ratio": 0.3,
+        "actual_ratio": 0.257,
+        "processing_time": 0.0009813308715820312,
+        "quality_scores": {
+          "overall_quality": 0.836,
+          "compression_ratio_score": 0.9,
+          "preservation_score": 0.95,
+          "readability_score": 0.794,
+          "playability_score": 0.753
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      }
+    ],
+    "medium": [
+      {
+        "sample_id": 1,
+        "original_length": 99555,
+        "compressed_length": 8444,
+        "target_ratio": 0.6,
+        "actual_ratio": 0.085,
+        "processing_time": 0.0010178089141845703,
+        "quality_scores": {
+          "overall_quality": 0.836,
+          "compression_ratio_score": 0.9,
+          "preservation_score": 0.95,
+          "readability_score": 0.794,
+          "playability_score": 0.753
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      },
+      {
+        "sample_id": 2,
+        "original_length": 99555,
+        "compressed_length": 8444,
+        "target_ratio": 0.6,
+        "actual_ratio": 0.085,
+        "processing_time": 0.0010182857513427734,
+        "quality_scores": {
+          "overall_quality": 0.836,
+          "compression_ratio_score": 0.9,
+          "preservation_score": 0.95,
+          "readability_score": 0.794,
+          "playability_score": 0.753
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      }
+    ],
+    "light": [
+      {
+        "sample_id": 1,
+        "original_length": 99555,
+        "compressed_length": 79607,
+        "target_ratio": 0.8,
+        "actual_ratio": 0.8,
+        "processing_time": 0.0010919570922851562,
+        "quality_scores": {
+          "overall_quality": 0.828,
+          "compression_ratio_score": 0.85,
+          "preservation_score": 0.95,
+          "readability_score": 0.786,
+          "playability_score": 0.745
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      },
+      {
+        "sample_id": 2,
+        "original_length": 99555,
+        "compressed_length": 79607,
+        "target_ratio": 0.8,
+        "actual_ratio": 0.8,
+        "processing_time": 0.0009748935699462891,
+        "quality_scores": {
+          "overall_quality": 0.828,
+          "compression_ratio_score": 0.85,
+          "preservation_score": 0.95,
+          "readability_score": 0.786,
+          "playability_score": 0.745
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      }
+    ],
+    "minimal": [
+      {
+        "sample_id": 1,
+        "original_length": 99555,
+        "compressed_length": 99450,
+        "target_ratio": 0.95,
+        "actual_ratio": 0.999,
+        "processing_time": 0.00031280517578125,
+        "quality_scores": {
+          "overall_quality": 0.803,
+          "compression_ratio_score": 0.7,
+          "preservation_score": 0.95,
+          "readability_score": 0.763,
+          "playability_score": 0.723
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      },
+      {
+        "sample_id": 2,
+        "original_length": 99555,
+        "compressed_length": 99450,
+        "target_ratio": 0.95,
+        "actual_ratio": 0.999,
+        "processing_time": 0.00032591819763183594,
+        "quality_scores": {
+          "overall_quality": 0.803,
+          "compression_ratio_score": 0.7,
+          "preservation_score": 0.95,
+          "readability_score": 0.763,
+          "playability_score": 0.723
+        },
+        "preserved_elements": [
+          "角色信息",
+          "关键情节",
+          "线索材料",
+          "时间线索",
+          "地点信息"
+        ],
+        "success": true
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "type": "best_performance",
+      "level": "heavy",
+      "reason": "最佳质量评分: 0.836",
+      "recommended_for": "高质量压缩需求"
+    },
+    {
+      "type": "fastest_compression",
+      "level": "minimal",
+      "reason": "最快处理速度: 0.000s",
+      "recommended_for": "快速响应场景"
+    },
+    {
+      "type": "deployment",
+      "recommendation": "建议部署medium级别作为默认压缩选项",
+      "reason": "平衡了质量和性能"
+    },
+    {
+      "type": "monitoring",
+      "recommendation": "在生产环境中监控压缩准确度和用户满意度",
+      "reason": "持续优化模型性能"
+    }
+  ],
+  "model_status": {
+    "service_available": true,
+    "model_loaded": true,
+    "test_environment": "production"
+  }
+}

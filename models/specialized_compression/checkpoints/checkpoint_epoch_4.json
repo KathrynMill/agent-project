@@ -1,0 +1,29 @@
+{
+  "epoch": 3,
+  "model_name": "t5-base-chinese",
+  "train_loss": 2.3253857372674025,
+  "val_loss": 1.7476569038967726,
+  "config": {
+    "data_path": "data/extracted/complete_training_dataset_v3.json",
+    "model_name": "t5-base-chinese",
+    "output_dir": "models/specialized_compression",
+    "epochs": 5,
+    "batch_size": 4,
+    "learning_rate": 5e-05,
+    "max_length": 512,
+    "save_interval": 2,
+    "warmup_ratio": 0.1,
+    "seed": 42,
+    "compression_levels": [
+      "heavy",
+      "medium",
+      "light",
+      "minimal"
+    ],
+    "target_performance": {
+      "val_loss_threshold": 1.5,
+      "quality_score_target": 0.8
+    }
+  },
+  "timestamp": "2025-12-01T15:38:20.254324"
+}

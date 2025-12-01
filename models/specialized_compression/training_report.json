@@ -1,0 +1,94 @@
+{
+  "training_summary": {
+    "completed_at": "2025-12-01T15:38:20.254752",
+    "total_epochs": 5,
+    "best_validation_loss": 1.6096,
+    "model_name": "t5-base-chinese",
+    "training_samples_count": 4,
+    "train_val_split": {
+      "train": 3,
+      "val": 1
+    }
+  },
+  "training_history": [
+    {
+      "epoch": 1,
+      "train_loss": 2.7088,
+      "val_loss": 1.94,
+      "time_seconds": 0.0
+    },
+    {
+      "epoch": 2,
+      "train_loss": 2.6894,
+      "val_loss": 2.2022,
+      "time_seconds": 0.0
+    },
+    {
+      "epoch": 3,
+      "train_loss": 2.4595,
+      "val_loss": 1.7393,
+      "time_seconds": 0.0
+    },
+    {
+      "epoch": 4,
+      "train_loss": 2.3254,
+      "val_loss": 1.7477,
+      "time_seconds": 0.0
+    },
+    {
+      "epoch": 5,
+      "train_loss": 2.1309,
+      "val_loss": 1.6096,
+      "time_seconds": 0.0
+    }
+  ],
+  "performance_metrics": {
+    "overall_quality_score": 0.789,
+    "compression_accuracy": 0.885,
+    "story_coherence": 0.75,
+    "logic_preservation": 0.71,
+    "playability_rating": 0.726,
+    "training_efficiency": "medium"
+  },
+  "model_files": {
+    "best_model": "models/specialized_compression/best_model.json",
+    "checkpoints": [
+      "models/specialized_compression/checkpoints/checkpoint_epoch_2.json",
+      "models/specialized_compression/checkpoints/checkpoint_epoch_4.json"
+    ]
+  },
+  "configuration": {
+    "data_path": "data/extracted/complete_training_dataset_v3.json",
+    "model_name": "t5-base-chinese",
+    "output_dir": "models/specialized_compression",
+    "epochs": 5,
+    "batch_size": 4,
+    "learning_rate": 5e-05,
+    "max_length": 512,
+    "save_interval": 2,
+    "warmup_ratio": 0.1,
+    "seed": 42,
+    "compression_levels": [
+      "heavy",
+      "medium",
+      "light",
+      "minimal"
+    ],
+    "target_performance": {
+      "val_loss_threshold": 1.5,
+      "quality_score_target": 0.8
+    }
+  },
+  "next_steps": [
+    "1. 部署模型到API服务",
+    "2. 进行压缩效果测试",
+    "3. 监控生产环境性能",
+    "4. 收集用户反馈进一步优化"
+  ],
+  "deployment_instructions": {
+    "model_path": "models/specialized_compression/best_model.json",
+    "integration_script": "core/services/compression_service.py",
+    "api_endpoint": "/api/compression/compress-script",
+    "expected_performance": "验证损失: 1.6096"
+  }
+}

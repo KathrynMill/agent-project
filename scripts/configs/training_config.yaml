@@ -1,0 +1,42 @@
+# 专用压缩模型训练配置
+
+# 模型配置
+model_name: 't5-large'
+hidden_size: 768
+max_length: 2048
+vocab_size: 32128
+
+# 训练参数
+learning_rate: 1e-4
+batch_size: 4
+num_epochs: 50
+warmup_steps: 1000
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+
+# 数据配置
+data_sources:
+  - "./data/samples/sample_data.json"
+train_ratio: 0.8
+val_ratio: 0.15
+test_ratio: 0.05
+apply_augmentation: true
+augmentation_factor: 2.0
+
+# 保存和日志
+output_dir: './checkpoints'
+log_interval: 100
+save_interval: 5
+eval_interval: 1
+
+# Wandb配置
+use_wandb: false
+wandb_project: 'script-compression-model'
+
+# 其他配置
+seed: 42
+num_workers: 4
+pin_memory: true
+
+# 设备配置
+device: 'auto'  # auto, cpu, cuda
